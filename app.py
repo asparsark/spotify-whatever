@@ -1,5 +1,5 @@
 from flask import Flask, request, redirect
-import const
+import config
 import auth
 import webbrowser
 
@@ -7,18 +7,29 @@ app = Flask(__name__)
 
 #webbrowser.open('http://localhost:5000', new=2)
 
-@app.route("/")
 
-def user():
-    url = auth.userAuth()
+@app.route('/')
 
-    return redirect(url)
+def initAuth():
+    callback = auth.userAuth(config.CLIENT_ID, config.REDIRECT_URI)
 
-@app.route("/yas")
+    return redirect(callback)
+
+
+@app.route('/callback')
 
 def callback():
     code = request.args['code']
 
-    res = auth.requestAccessToken(code)
+    res = auth.requestAccessToken(code, config.REDIRECT_URI, config.CLIENT_ID, config.CLIENT_SECRET)
 
-    return res.text
+    # make that shit persist txt or smth
+    config.REFRESH_TOKEN = res['access_token']
+
+    return res
+
+
+@app.route('/refresh_token')
+
+def getRefreshToken():
+    return 'yeet'
