@@ -1,5 +1,5 @@
 .vscode
-.env
 venv
 __pycache__
-config.py
+config.json
+.ipynb_checkpoints
