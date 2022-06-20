@@ -1,51 +1,65 @@
-import base64, json, requests
-
-API_URL = 'https://accounts.spotify.com'
-
-def userAuth(client_id, redirect_uri):
-
-    return f'''{API_URL}/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'''
+from flask import Flask, request, redirect
+from config import load, update
+import auth_requests as ar, os
 
 
-def generateHeaders(client_id, client_secret):
+_app = Flask(__name__)
+_app_quit = False
 
-    enc1 = f'{client_id}:{client_secret}'
-    enc2 = base64.b64encode(enc1.encode()).decode()
+def auth_init():
+    cfg = load()
+    _app.config.cfg = cfg
 
-    headers = {
-        'Content-Type' : 'application/x-www-form-urlencoded', 
-        'Authorization' : f'Basic {enc2}'
-    }
-
-    return headers
-
-
-def requestAccessToken(code, redirect_uri, client_id, client_secret):
-
-    body = {
-        'grant_type': 'authorization_code',
-        'code' : code,
-        'redirect_uri': redirect_uri,
-        'client_id': client_id,
-        'client_secret': client_secret
-    }
-
-    headers = generateHeaders(client_id, client_secret)
-
-    res = requests.post(f'{API_URL}/api/token', params=body, headers=headers)
-
-    return json.loads(res.text)
+    if not _refresh(cfg):
+        _app.run()
+        # add browser tab opening magic
+        #webbrowser.open('http://localhost:5000', new=2)
 
 
-def requestRefreshToken(refresh_token, client_id, client_secret):
+def _refresh(cfg):
+    if cfg['refresh_token']:
+        res = ar.refresh_token(cfg['client_id'], cfg['client_secret'], cfg['refresh_token'])
 
-    body = {
-        'grant_type': 'refresh_token',
-        'refresh_token' : refresh_token,
-    }
+        if 'access_token' in res:
+            update({'access_token': res['access_token']})
+            return True
+        else: 
+            update({'refresh_token': ''})
+            return False
 
-    headers = generateHeaders(client_id, client_secret)
 
-    res = requests.post(f'{API_URL}/api/token', params=body, headers=headers)
+@_app.route('/')
+def init():
+    client_id, redirect_uri = _app.config.cfg['client_id'], _app.config.cfg['redirect_uri']
 
-    return json.loads(res.text)
+    callback = ar.auth_url(client_id, redirect_uri)
+
+    return redirect(callback)
+
+
+@_app.route('/callback')
+def callback():
+    if 'code' in request.args:
+        code = request.args['code']
+        client_id, client_secret, redirect_uri = _app.config.cfg['client_id'], _app.config.cfg['client_secret'], _app.config.cfg['redirect_uri']
+
+        res = ar.access_token(code, client_id, client_secret, redirect_uri)
+
+        if 'access_token' in res:
+            update({'access_token': res['access_token'], 'refresh_token': res['refresh_token']})
+
+    return redirect('exit')
+        
+
+@_app.route('/exit')
+def exit_app():
+    global _app_quit
+    _app_quit = True
+
+    return "Exiting"
+
+
+@_app.teardown_request
+def teardown(e):
+    if _app_quit:
+        os._exit(0)

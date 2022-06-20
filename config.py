@@ -19,4 +19,4 @@ def update(payload: dict, cfg_path=cfg_json):
     with open(cfg_path, 'w') as j:
         json.dump(cfg, j, indent=4)
 
-    return load()
+    return
