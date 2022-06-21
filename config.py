@@ -8,9 +8,8 @@ def load(cfg_path=cfg_json):
 
     return cfg
 
-
 def update(payload: dict, cfg_path=cfg_json):
-    cfg = load()
+    cfg = load(cfg_json)
 
     for i in payload:
         if i in cfg:

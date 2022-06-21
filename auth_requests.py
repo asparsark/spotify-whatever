@@ -2,10 +2,8 @@ import base64, requests, json
 
 API_URL_AUTH = 'https://accounts.spotify.com'
 
-
 def auth_url(client_id, redirect_uri):
-    return f'''{API_URL_AUTH}/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'''
-
+    return f'{API_URL_AUTH}/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'
 
 def generate_headers(client_id, client_secret):
     enc1 = f'{client_id}:{client_secret}'
@@ -17,7 +15,6 @@ def generate_headers(client_id, client_secret):
     }
 
     return headers
-
 
 def access_token(code, client_id, client_secret, redirect_uri):
     body = {
@@ -33,7 +30,6 @@ def access_token(code, client_id, client_secret, redirect_uri):
     res = requests.post(f'{API_URL_AUTH}/api/token', params=body, headers=headers)
 
     return json.loads(res.text)
-
 
 def refresh_token(client_id, client_secret, refresh_token):
     body = {

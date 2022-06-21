@@ -1,13 +1,14 @@
+import os
 from flask import Flask, request, redirect
-from config import load, update
-import auth_requests as ar, os
 
+import config
+import auth_requests as ar
 
 _app = Flask(__name__)
 _app_quit = False
 
 def auth_init():
-    cfg = load()
+    cfg = config.load()
     _app.config.cfg = cfg
 
     if not _refresh(cfg):
@@ -15,18 +16,16 @@ def auth_init():
         # add browser tab opening magic
         #webbrowser.open('http://localhost:5000', new=2)
 
-
 def _refresh(cfg):
     if cfg['refresh_token']:
         res = ar.refresh_token(cfg['client_id'], cfg['client_secret'], cfg['refresh_token'])
 
         if 'access_token' in res:
-            update({'access_token': res['access_token']})
+            config.update({'access_token': res['access_token']})
             return True
         else: 
-            update({'refresh_token': ''})
+            config.update({'refresh_token': ''})
             return False
-
 
 @_app.route('/')
 def init():
@@ -35,7 +34,6 @@ def init():
     callback = ar.auth_url(client_id, redirect_uri)
 
     return redirect(callback)
-
 
 @_app.route('/callback')
 def callback():
@@ -46,20 +44,21 @@ def callback():
         res = ar.access_token(code, client_id, client_secret, redirect_uri)
 
         if 'access_token' in res:
-            update({'access_token': res['access_token'], 'refresh_token': res['refresh_token']})
+            config.update({'access_token': res['access_token'], 'refresh_token': res['refresh_token']})
 
     return redirect('exit')
         
-
 @_app.route('/exit')
 def exit_app():
     global _app_quit
     _app_quit = True
 
-    return "Exiting"
-
+    return 'Exiting'
 
 @_app.teardown_request
 def teardown(e):
     if _app_quit:
         os._exit(0)
+
+if __name__ == '__main__':
+    auth_init()
