@@ -3,7 +3,8 @@ import base64, requests, json
 API_URL_AUTH = 'https://accounts.spotify.com'
 
 def auth_url(client_id, redirect_uri):
-    return f'{API_URL_AUTH}/authorize?response_type=code&client_id={client_id}&redirect_uri={redirect_uri}'
+    scope = 'playlist-read-private'
+    return f'{API_URL_AUTH}/authorize?response_type=code&scope={scope}&client_id={client_id}&redirect_uri={redirect_uri}'
 
 def generate_headers(client_id, client_secret):
     enc1 = f'{client_id}:{client_secret}'

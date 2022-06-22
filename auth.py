@@ -22,6 +22,7 @@ def _refresh(cfg):
 
         if 'access_token' in res:
             config.update({'access_token': res['access_token']})
+            # print somethign when getting access token
             return True
         else: 
             config.update({'refresh_token': ''})
