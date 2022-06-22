@@ -1,7 +1,7 @@
-from auth import auth_init
+from data import playlists
 
 def main():
-    auth_init()
+    playlists()
 
 if __name__ == '__main__':
     main()
