@@ -8,31 +8,32 @@ _app = Flask(__name__)
 _app_quit = False
 
 def auth_init():
-    cfg = config.load()
-    _app.config.cfg = cfg
+    config_data = config.load()
 
-    if not _refresh(cfg):
+    if not _refresh(config_data):
+        _app.config.config_data = config_data
         _app.run()
         # add browser tab opening magic
         #webbrowser.open('http://localhost:5000', new=2)
 
-def _refresh(cfg):
-    if cfg['refresh_token']:
-        res = ar.refresh_token(cfg['client_id'], cfg['client_secret'], cfg['refresh_token'])
+def _refresh(config_data):
+    if config_data.refresh_token:
+        res = ar.refresh_token(config_data.client_id, config_data.client_secret, config_data.refresh_token)
 
         if 'access_token' in res:
             config.update({'access_token': res['access_token']})
-            # print somethign when getting access token
+
             return True
         else: 
             config.update({'refresh_token': ''})
-            return False
+
+    return False
 
 @_app.route('/')
 def init():
-    client_id, redirect_uri = _app.config.cfg['client_id'], _app.config.cfg['redirect_uri']
+    config_data = _app.config.config_data
 
-    callback = ar.auth_url(client_id, redirect_uri)
+    callback = ar.auth_url(config_data.client_id, config_data.redirect_uri)
 
     return redirect(callback)
 
@@ -40,9 +41,9 @@ def init():
 def callback():
     if 'code' in request.args:
         code = request.args['code']
-        client_id, client_secret, redirect_uri = _app.config.cfg['client_id'], _app.config.cfg['client_secret'], _app.config.cfg['redirect_uri']
+        config_data = _app.config.config_data
 
-        res = ar.access_token(code, client_id, client_secret, redirect_uri)
+        res = ar.access_token(code, config_data.client_id, config_data.client_secret, config_data.redirect_uri)
 
         if 'access_token' in res:
             config.update({'access_token': res['access_token'], 'refresh_token': res['refresh_token']})
